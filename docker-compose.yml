@@ -1,0 +1,71 @@
+# Orquesta ambos servicios (`modelo-propension` y `sistema-agentico`) en la misma
+# red de Docker Compose, con `sistema-agentico` apuntando a `modelo-propension` por
+# su nombre de servicio Docker (no `localhost`) — tarea 17.4 de
+# `.kiro/specs/sistema-agentico-cobranza/tasks.md`.
+#
+# IMPORTANTE (seguridad): ninguno de los dos servicios expone autenticación ni
+# autorización (ver docstring de `sistema_agentico/api/main.py`). Este compose es
+# para uso local/demo; un despliegue real requeriría, como mínimo, autenticación y
+# restringir el acceso de red a estos puertos.
+#
+# No se define una red explícita: la red *default* que Docker Compose crea para este
+# proyecto ya permite que los servicios se resuelvan entre sí por su nombre (p.ej.
+# `http://modelo-propension:8000` desde `sistema-agentico`), sin necesidad de
+# declarar `networks:` explícitamente.
+
+services:
+  modelo-propension:
+    build:
+      context: ./src/modelo-propension
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    healthcheck:
+      # La imagen base (`python:3.11-slim`) no incluye `curl`; se evita modificar
+      # el Dockerfile de modelo-propension (fuera del alcance de esta tarea) usando
+      # un healthcheck basado en la librería estándar de Python, ya presente en la
+      # imagen.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  sistema-agentico:
+    build:
+      context: ./src/sistema-agentico
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    depends_on:
+      modelo-propension:
+        condition: service_healthy
+    volumes:
+      # Monta la carpeta `data/` de la raíz del repo (los 5 CSV crudos de
+      # `modelo-propension`), solo lectura, para que `CsvObligacionProfileProvider`
+      # (tarea 19) pueda leer el archivo `trtest` real dentro del contenedor cuando
+      # USE_REAL_PROFILE=1. Montado en `/data` (no en `/app`, el WORKDIR de la imagen)
+      # para no colisionar con el código de la aplicación copiado por el Dockerfile.
+      - ./data:/data:ro
+    environment:
+      # Nombre del servicio Docker Compose, NO localhost: es el requisito central
+      # de esta tarea (sistema-agentico debe alcanzar a modelo-propension por su
+      # nombre en la red de Compose).
+      - PROPENSION_SERVICE_URL=http://modelo-propension:8000
+      # Dentro de Compose ambos servicios están disponibles, así que por defecto
+      # sistema-agentico llama al modelo-propension real (en vez del fake en
+      # memoria). Overridable desde el shell/`.env` del repo si se prefiere el fake.
+      - USE_REAL_PROPENSION=${USE_REAL_PROPENSION:-1}
+      # Nunca se hardcodea un secreto real en este archivo: si el usuario define
+      # OPENAI_API_KEY/USE_REAL_LLM en su shell o en un `.env` en la raíz del repo
+      # (no commiteado), Compose los sustituye aquí; si no, quedan vacíos/en 0 y el
+      # agente conversacional usa el chat model fake determinista (sin llamadas
+      # reales a OpenAI).
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - USE_REAL_LLM=${USE_REAL_LLM:-0}
+      # Perfil/historial real de obligación (tarea 19.3), respaldado por el volumen
+      # `/data` montado arriba. Por defecto en 0 (provider sintético en memoria, mismo
+      # comportamiento que antes de esta tarea); overridable desde el shell/`.env` del
+      # repo, igual que las otras banderas USE_REAL_*.
+      - RAW_DATA_DIR=/data
+      - USE_REAL_PROFILE=${USE_REAL_PROFILE:-0}
