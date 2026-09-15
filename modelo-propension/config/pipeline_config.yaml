@@ -1,0 +1,50 @@
+# Configuracion parametrizable del pipeline de propension (RNF-10).
+# Nada de codigo debe tener estos valores "quemados"; todo cambia aqui.
+
+data:
+  # Carpeta con los 5 archivos entregados por Bancolombia (ver Metadata.xlsx).
+  raw_dir: "../../data"
+  trtest_file: "prueba_op_base_pivot_var_rpta_alt_enmascarado_trtest.csv"
+  oot_file: "prueba_op_base_pivot_var_rpta_alt_enmascarado_oot.csv"
+  probabilidad_file: "prueba_op_probabilidad_oblig_base_hist_enmascarado_completa.csv"
+  pagos_file: "prueba_op_maestra_cuotas_pagos_mes_hist_enmascarado_completa.csv"
+  customer_file: "prueba_op_master_customer_data_enmascarado_completa.csv"
+  id_column: "id_obligacion" # construida como nit#num_oblig_orig#num_oblig (ver ingest.py)
+  label_column: "var_rpta_alt"
+  reference_month: "2023-08" # mes mas antiguo disponible, usado como referencia para el calculo de drift
+  scores_path: "data_output/scores" # salida de infer_batch (un archivo por mes calificado), separado de registry.path
+
+split:
+  # fecha_corte (t = fecha_var_rpta_alt - 1 mes) va de 2023-07 a 2023-11 en
+  # trtest (5 meses). OOT interna = todo lo posterior a val_end_month
+  # (automatico en split.temporal_split); oot_month es solo informativo.
+  train_end_month: "2023-09"
+  val_end_month: "2023-10"
+  oot_month: "2023-11" 
+
+model:
+  algorithm: "xgboost"
+  hyperparameters:
+    max_depth: [3, 4, 5, 6, 7, 8, 9]
+    learning_rate: [0.01, 0.05, 0.1, 0.2, 0.3]
+    n_estimators: [100, 200, 300, 400]
+    subsample: [0.5, 0.7, 0.85, 1.0]
+    colsample_bytree: [0.5, 0.7, 0.85, 1.0]
+    reg_lambda: [10.0, 15.0, 20.0, 30.0]
+
+  n_iter: 150
+  random_seed: 42
+
+registry:
+  path: "models/registry"
+  promotion_metric: "f1"
+  min_improvement: 0.01
+
+monitoring:
+  psi_threshold: 0.2
+  ks_threshold: 0.1
+  performance_drop_threshold: 0.05
+
+api:
+  host: "0.0.0.0"
+  port: 8000

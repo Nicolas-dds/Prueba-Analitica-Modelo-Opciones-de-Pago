@@ -1,0 +1,17 @@
+{
+  "metricas": {
+    "f1": 0.6742745795738552,
+    "f1_threshold": 0.33312007784843445,
+    "auc": 0.7161149913161804,
+    "ks": 0.3140961825847626
+  },
+  "hiperparametros": {
+    "max_depth": 8,
+    "learning_rate": 0.05,
+    "n_estimators": 300,
+    "subsample": 0.7,
+    "colsample_bytree": 0.7,
+    "reg_lambda": 10.0
+  },
+  "version": "v20260913065122"
+}
