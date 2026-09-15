@@ -1,0 +1,9 @@
+# Reglas de elegibilidad — esquema versión 1.
+version: 1
+max_opciones_pago_mes: 3
+cooldown_meses_por_tipo:
+  ampliacion_plazo: 3
+  reduccion_cuota: 3
+  renegociacion_tasa: 4
+  reestructuracion: 4
+max_dias_acuerdo: 5

@@ -1,0 +1,22 @@
+[project]
+name = "sistema-agentico"
+version = "0.1.0"
+description = "Sistema Agéntico de Gestión de Cartera en Mora"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.141.1",
+    "hypothesis==6.115.5",
+    "langchain-core==1.3.3",
+    "langchain-openai==1.2.0",
+    "pandas==2.2.3",
+    "pytest==8.3.3",
+    "python-dotenv==1.2.2",
+    "pyyaml==6.0.2",
+    "uvicorn==0.52.4",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
