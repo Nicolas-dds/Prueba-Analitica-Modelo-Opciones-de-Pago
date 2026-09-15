@@ -1,0 +1,18 @@
+# Entorno / secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[oc]
+.venv/
+*.egg-info/
+
+# Datos de clientes (nunca versionar)
+data/
+**/data_output/
+
+# Modelos binarios entrenados
+*.joblib
+*.pkl
