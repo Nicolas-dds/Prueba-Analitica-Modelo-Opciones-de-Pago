@@ -1,4 +1,4 @@
-# AI Prod — Modelo de Propensión + Sistema Agéntico de Cobranza
+# Modelo de Propensión + Sistema Agéntico de Cobranza
 
 Solución E2E para la prueba de Bancolombia: un
 modelo de propensión a aceptación de opciones de pago (`src/modelo-propension`)
